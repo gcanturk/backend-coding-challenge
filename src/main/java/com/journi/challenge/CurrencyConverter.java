@@ -2,6 +2,7 @@ package com.journi.challenge;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.graalvm.compiler.hotspot.nodes.CurrentJavaThreadNode;
 import org.springframework.boot.json.JacksonJsonParser;
 
 import java.io.File;
@@ -13,10 +14,18 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class CurrencyConverter {
+    private static CurrencyConverter currencyConverter;
+
     private final Map<String, String> supportedCountriesCurrency;
     private final Map<String, Double> currencyEurRate;
 
-    public CurrencyConverter() {
+    public static CurrencyConverter getInstance() {
+        if (currencyConverter == null)
+            currencyConverter = new CurrencyConverter();
+        return currencyConverter;
+    }
+
+    private CurrencyConverter() {
         supportedCountriesCurrency = new HashMap<>();
         supportedCountriesCurrency.put("AT", "EUR");
         supportedCountriesCurrency.put("DE", "EUR");
@@ -48,5 +57,9 @@ public class CurrencyConverter {
 
     public Double convertEurToCurrency(String currencyCode, Double eurValue) {
         return eurValue * currencyEurRate.getOrDefault(currencyCode, 1.0);
+    }
+
+    public Double convertCurrencyToEur(String currencyCode, Double value) {
+        return value / currencyEurRate.getOrDefault(currencyCode, 1.0);
     }
 }

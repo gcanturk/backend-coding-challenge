@@ -24,22 +24,34 @@ class ProductsControllerTest {
     public void shouldListProductsWithCurrencyCodeAndConvertedPriceDefault() throws Exception {
         mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()", IsEqual.equalTo(4)));
+                .andExpect(jsonPath("$.length()", IsEqual.equalTo(4)))
+                .andExpect(jsonPath("$[0].currencyCode", IsEqual.equalTo("EUR")));
     }
 
     @Test
     public void shouldListProductsWithCurrencyCodeAndConvertedPriceBR() throws Exception {
         mockMvc.perform(get("/products?countryCode=BR"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()", IsEqual.equalTo(4)));
+                .andExpect(jsonPath("$.length()", IsEqual.equalTo(4)))
+                .andExpect(jsonPath("$[0].currencyCode", IsEqual.equalTo("BRL")))
+                .andExpect(jsonPath("$[0].price", IsEqual.equalTo(128.7 )));
+    }
+
+    @Test
+    public void shouldListProductsWithCurrencyCodeAndConvertedPriceCA() throws Exception {
+        mockMvc.perform(get("/products?countryCode=CA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()", IsEqual.equalTo(4)))
+                .andExpect(jsonPath("$[0].currencyCode", IsEqual.equalTo("CAD")))
+                .andExpect(jsonPath("$[0].price", IsEqual.equalTo(37.5525 )));
     }
 
     @Test
     public void shouldListProductsWithCurrencyCodeEURWhenCountryCodeNonSupported() throws Exception {
         mockMvc.perform(get("/products?countryCode=JP"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()", IsEqual.equalTo(4)));
-//                .andExpect(jsonPath("$[*].currencyCode", IsNot.not(IsEmptyCollection.empty())))
-//                .andExpect(jsonPath("$[0].currencyCode", IsEqual.equalTo("EUR")));
+                .andExpect(jsonPath("$.length()", IsEqual.equalTo(4)))
+                .andExpect(jsonPath("$[*].currencyCode", IsNot.not(IsEmptyCollection.empty())))
+                .andExpect(jsonPath("$[0].currencyCode", IsEqual.equalTo("EUR")));
     }
 }

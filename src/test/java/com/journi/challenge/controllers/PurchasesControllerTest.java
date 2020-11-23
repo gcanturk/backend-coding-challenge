@@ -3,6 +3,7 @@ package com.journi.challenge.controllers;
 import com.journi.challenge.models.Purchase;
 import com.journi.challenge.models.PurchaseStats;
 import com.journi.challenge.repositories.PurchasesRepository;
+import org.hamcrest.core.IsEqual;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,7 +17,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -47,6 +51,20 @@ class PurchasesControllerTest {
         assertEquals("1", savedPurchase.getInvoiceNumber());
         assertEquals("2020-01-01T10:00:00", savedPurchase.getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME));
         assertEquals(25.34, savedPurchase.getTotalValue());
+    }
+
+    @Test
+    public void testPurchaseCurrencyCodeUSD() throws Exception {
+        String body = getPurchaseJson("2", "customer 1", "2020-01-01T10:00:00+01:00", 5.5935, "USD", "product1");
+        mockMvc.perform(post("/purchases")
+                .contentType(MediaType.APPLICATION_JSON).content(body)
+        ).andExpect(status().isOk());
+
+        Purchase savedPurchase = purchasesRepository.list().get(purchasesRepository.list().size() - 1);
+        assertEquals("customer 1", savedPurchase.getCustomerName());
+        assertEquals("2", savedPurchase.getInvoiceNumber());
+        assertEquals("2020-01-01T10:00:00", savedPurchase.getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME));
+        assertEquals(4.996871368552784, savedPurchase.getTotalValue());
     }
 
 
@@ -83,5 +101,21 @@ class PurchasesControllerTest {
         assertEquals(10.0, purchaseStats.getAvgAmount());
         assertEquals(10.0, purchaseStats.getMinAmount());
         assertEquals(10.0, purchaseStats.getMaxAmount());
+    }
+
+    @Test
+    public void testPurchaseStatisticsNoRecords() throws Exception {
+        LocalDateTime firstDate = LocalDateTime.now().minusDays(40);
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE.withZone(ZoneId.of("UTC"));
+        // Inside window purchases
+        purchasesRepository.save(new Purchase("1", firstDate, Collections.emptyList(), "", 10.0));
+        purchasesRepository.save(new Purchase("1", firstDate.plusDays(1), Collections.emptyList(), "", 10.0));
+        purchasesRepository.save(new Purchase("1", firstDate.plusDays(2), Collections.emptyList(), "", 10.0));
+        purchasesRepository.save(new Purchase("1", firstDate.plusDays(3), Collections.emptyList(), "", 10.0));
+        purchasesRepository.save(new Purchase("1", firstDate.plusDays(4), Collections.emptyList(), "", 10.0));
+        purchasesRepository.save(new Purchase("1", firstDate.plusDays(5), Collections.emptyList(), "", 10.0));
+
+        mockMvc.perform(get("/purchases/statistics"))
+                .andExpect(status().is4xxClientError());
     }
 }

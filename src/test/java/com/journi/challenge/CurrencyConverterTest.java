@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CurrencyConverterTest {
 
-    private CurrencyConverter currencyConverter = new CurrencyConverter();
+    private CurrencyConverter currencyConverter = CurrencyConverter.getInstance();
 
     @Test
     void findCurrencyCodeForSupportedCountry() {
